@@ -43,7 +43,7 @@ function convertStringToNumber (string, radix = 10) {
     return -Infinity;
   }
   let [integerStr, decimalStr = ''] = string.split('.');
-  let flag = false, len = decimalStr.length, number = 0, regNumber = /\d/, regLetter = /[a-fA-F]/;
+  let flag = false, len = decimalStr.length, number = 0, regNumber = /\d/, arr = ['a', 'b', 'c', 'd', 'e', 'f'];
   if (len) {
     integerStr = integerStr + decimalStr;
   }
@@ -54,10 +54,12 @@ function convertStringToNumber (string, radix = 10) {
   for (let i = 0; i < integerStr.length; i ++) {
     let temp = integerStr[i];
     if (!regNumber.test(temp)) {
-      if (!regLetter.test(temp)) {
+      temp = temp.toLowerCase();
+      let index = arr.findIndex(a => a === temp);
+      if (index < 0 || index + 10 >= radix) {
         return NaN;
       }
-      temp = temp.toUpperCase().charCodeAt('0') - 65 + 10;
+      temp = temp.toLowerCase().charCodeAt('0') - 97 + 10;
     } else if (temp >= radix) {
       return NaN;
     }
