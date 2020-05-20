@@ -18,22 +18,24 @@ class Request {
     }
     this.headers['Content-Length'] = this.bodyText.length
   }
-  toString() {
+  toString () {
     return `${this.method} ${this.path} HTTP/1.1
       ${Object.keys(this.headers).map(key => `${key}: ${this.headers[key]}`).join('\r\n')}
+      \r\n
       ${this.bodyText}`
   }
-  send() {
+  send () {
     return new Promise((resolve, reject) => {
       const parser = new ResponseParser()
-      const connection = net.createConnection({ 
-        port: 8088,
-        host: '127.0.0.1'
-        }, () => {
-          connection.write(this.toString())
-        }
+      const connection = net.createConnection({
+        port: this.port,
+        host: this.host
+      }, () => {
+        connection.write(this.toString())
+      }
       );
       connection.on('data', (data) => {
+        console.log(data.toString())
         parser.receive(data.toString())
         if (parser.isFinished) {
           resolve(parser.response)
@@ -44,12 +46,12 @@ class Request {
         reject()
       });
     })
-    
+
   }
 }
 
 class Response {
-  
+
 }
 
 class ResponseParser {
@@ -69,11 +71,11 @@ class ResponseParser {
     this.headerValue = ''
     this.bodyParse = null
   }
-  get isFinished() {
+  get isFinished () {
     return this.bodyParse && this.bodyParse.isFinished
   }
-  get response() {
-    let matchs = this.statusLine.match(/HTTP 1.1 ([\d]+) ([\s\S]+)/)
+  get response () {
+    let matchs = this.statusLine.match(/HTTP\/1.1 ([\d]+) ([\s\S]+)/)
     return {
       status: matchs[1],
       statusText: matchs[2],
@@ -81,12 +83,12 @@ class ResponseParser {
       body: this.bodyParse.content.join('')
     }
   }
-  receive(string) {
-    for (let i = 0; i < string.length; i ++) {
+  receive (string) {
+    for (let i = 0; i < string.length; i++) {
       this.receiveChar(string.charAt(i))
     }
   }
-  receiveChar(char) {
+  receiveChar (char) {
     if (this.current === this.WAITINT_STATUS_LINE) {
       if (char === '\r') {
         this.current = this.WAITINT_STATUS_LINE_END
@@ -102,7 +104,7 @@ class ResponseParser {
         this.current = this.WAITINT_HEADER_SPACE
       } else if (char === '\r') {
         this.current = this.WAITINT_HEADER_BLOCK_END
-        if(this.headers['Transfer-Encoding'] === 'chunked') {
+        if (this.headers['Transfer-Encoding'] === 'chunked') {
           this.bodyParse = new TrunkedBodyParser()
         }
       } else {
@@ -140,7 +142,7 @@ class TrunkedBodyParser {
     this.WAITING_LENGTH = 0
     this.WAITING_LENGTH_LINE_END = 1
     this.READING_TRUNK = 2
-    this.WAINING_NEW_LINE = 3   
+    this.WAINING_NEW_LINE = 3
     this.WAINING_NEW_LINE_END = 4
 
     this.current = this.WAITING_LENGTH
@@ -148,20 +150,21 @@ class TrunkedBodyParser {
     this.content = []
     this.isFinished = false
   }
-  receiveChar(char) {
+  receiveChar (char) {
     if (this.isFinished) {
       return
     }
     if (this.current === this.WAITING_LENGTH) {
       if (char === '\r') {
         if (this.length === 0) {
+          console.log(char, 'endd')
           this.isFinished = true
         } else {
           this.current = this.WAITING_LENGTH_LINE_END
         }
       } else {
-       this.length *= 10
-       this.length += char.charCodeAt(0) - '0'.charCodeAt(0)
+        this.length *= 16
+        this.length += parseInt(char, 16)
       }
     } else if (this.current === this.WAITING_LENGTH_LINE_END) {
       if (char === '\n') {
@@ -169,7 +172,7 @@ class TrunkedBodyParser {
       }
     } else if (this.current === this.READING_TRUNK) {
       this.content.push(char)
-      this.length --
+      this.length -= Buffer.from(char).length
       if (this.length === 0) {
         this.current = this.WAINING_NEW_LINE
       }
@@ -187,7 +190,7 @@ class TrunkedBodyParser {
 
 void async function () {
   let request = new Request({
-    port: 8088,
+    port: 3000,
     host: '127.0.0.1',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -199,6 +202,6 @@ void async function () {
     }
   })
   let response = await request.send()
-  console.log(response.response)
-}
+  console.log(response, 123123)
+}()
 
