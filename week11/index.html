@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      #container {
+        width: 800px;
+        font-size: 0;
+      }
+      .cell {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        background: #fff;
+      }
+      div.active {
+        background: #111;
+      }
+      div.visited {
+        background: lightblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <div>
+      <div>x: <input type="text" id="x" /></div>
+      <div>y: <input type="text" id="y" /></div>
+      <button id="search">寻路</button>
+    </div>
+    <button id="clear">清除</button>
+    <script src="./index.js"></script>
+  </body>
+</html>
